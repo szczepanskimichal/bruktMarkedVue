@@ -1,55 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  category: string
-  size?: string
-  condition: string
-  color?: string
-  brand?: string
-  images: string[]
-  status: string
-  views: number
-  createdAt: string
-  updatedAt: string
-  sellerId: string
-  seller: {
-    id: string
-    username: string
-    firstName?: string
-    lastName?: string
-    avatar?: string
-  }
-  _count: {
-    likes: number
-  }
-}
-
-interface CreateProductData {
-  title: string
-  description: string
-  price: number
-  category: string
-  size?: string
-  condition: string
-  color?: string
-  brand?: string
-  images?: string[]
-}
-
-interface ProductFilters {
-  category?: string
-  search?: string
-  minPrice?: number
-  maxPrice?: number
-  condition?: string
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
-}
+import type { Product, CreateProductData, ProductFilters } from '~/types'
 
 export const useProductsStore = defineStore('products', () => {
   const products = ref<Product[]>([])

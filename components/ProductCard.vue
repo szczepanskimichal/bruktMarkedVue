@@ -108,7 +108,7 @@
           <!-- Likes count -->
           <div class="flex items-center space-x-1">
             <SimpleIcon name="mdi:heart" class="w-4 h-4 text-red-500" />
-            <span>{{ product.likes || 0 }}</span>
+            <span>{{ product._count?.likes || 0 }}</span>
           </div>
           
           <!-- Views count -->
@@ -133,25 +133,7 @@ import { storeToRefs } from 'pinia'
 import { useFavoritesStore } from '~/stores/favorites'
 import { useAuthStore } from '~/stores/auth'
 import { useChatStore } from '~/stores/chat'
-
-interface Product {
-  id: string
-  title: string
-  price: number
-  images?: string[]
-  condition?: string
-  size?: string
-  brand?: string
-  status: string
-  views?: number
-  likes?: number
-  createdAt: string
-  seller?: {
-    id: string
-    username: string
-    avatar?: string
-  }
-}
+import type { Product } from '~/types'
 
 interface Props {
   product: Product
