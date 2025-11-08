@@ -21,7 +21,8 @@ export default defineEventHandler(async (event) => {
       maxPrice,
       condition,
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
+      ids
     } = query
 
     const pageNum = Math.max(1, parseInt(page as string))
@@ -31,6 +32,14 @@ export default defineEventHandler(async (event) => {
     // Build where conditions
     const where: any = {
       status: 'active'
+    }
+
+    // Filter by specific IDs (for favorites)
+    if (ids) {
+      const idsArray = (ids as string).split(',').filter(id => id.trim())
+      if (idsArray.length > 0) {
+        where.id = { in: idsArray }
+      }
     }
 
     if (category) {
