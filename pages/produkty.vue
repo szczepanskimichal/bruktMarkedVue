@@ -170,6 +170,7 @@
             v-for="product in productsStore.products"
             :key="product.id"
             :product="product"
+            @preview="openPreviewModal"
           />
         </div>
 
@@ -190,6 +191,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Product Preview Modal -->
+    <ProductPreviewModal
+      :product="selectedProduct"
+      :is-open="isPreviewModalOpen"
+      @close="closePreviewModal"
+    />
   </div>
 </template>
 
@@ -199,6 +207,7 @@ import { useProductsStore } from '~/stores/products'
 import { useAuthStore } from '~/stores/auth'
 import { useFavoritesStore } from '~/stores/favorites'
 import { useNotificationStore } from '~/stores/notifications'
+import type { Product } from '~/types'
 
 // Meta tags
 useHead({
@@ -221,6 +230,10 @@ const selectedCondition = ref('')
 const minPrice = ref<number | null>(null)
 const maxPrice = ref<number | null>(null)
 const sortBy = ref('createdAt:desc')
+
+// Modal state
+const selectedProduct = ref<Product | null>(null)
+const isPreviewModalOpen = ref(false)
 
 // Computed
 const hasActiveFilters = computed(() => {
@@ -270,6 +283,17 @@ const loadMore = async () => {
   if (!result.success) {
     notificationStore.error('Błąd', result.error || 'Nie udało się załadować więcej produktów')
   }
+}
+
+// Modal methods
+const openPreviewModal = (product: Product) => {
+  selectedProduct.value = product
+  isPreviewModalOpen.value = true
+}
+
+const closePreviewModal = () => {
+  selectedProduct.value = null
+  isPreviewModalOpen.value = false
 }
 
 // Debounced search

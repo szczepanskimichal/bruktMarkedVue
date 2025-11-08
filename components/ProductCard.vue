@@ -38,17 +38,33 @@
       <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
         <div class="flex space-x-2">
           <button
-            @click.stop="goToProduct"
+            @click.stop="openPreview"
             class="bg-white text-gray-900 p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+            title="Szybki podgląd"
+          >
+            <SimpleIcon name="mdi:magnify-plus" class="w-4 h-4" />
+          </button>
+          <button
+            @click.stop="goToProduct"
+            class="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            title="Zobacz szczegóły"
           >
             <SimpleIcon name="mdi:eye" class="w-4 h-4" />
           </button>
           <button
             v-if="canMessage"
             @click.stop="openChat"
-            class="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            class="bg-green-600 text-white p-2 rounded-full shadow-lg hover:bg-green-700 transition-colors"
+            title="Napisz do sprzedawcy"
           >
             <SimpleIcon name="mdi:message" class="w-4 h-4" />
+          </button>
+          <button
+            @click.stop="shareProduct"
+            class="bg-purple-600 text-white p-2 rounded-full shadow-lg hover:bg-purple-700 transition-colors"
+            title="Udostępnij"
+          >
+            <SimpleIcon name="mdi:share-variant" class="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -133,17 +149,24 @@ import { storeToRefs } from 'pinia'
 import { useFavoritesStore } from '~/stores/favorites'
 import { useAuthStore } from '~/stores/auth'
 import { useChatStore } from '~/stores/chat'
+import { useNotificationStore } from '~/stores/notifications'
 import type { Product } from '~/types'
 
 interface Props {
   product: Product
 }
 
+interface Emits {
+  (e: 'preview', product: Product): void
+}
+
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const favoritesStore = useFavoritesStore()
 const authStore = useAuthStore()
 const chatStore = useChatStore()
+const notificationStore = useNotificationStore()
 
 const { user } = storeToRefs(authStore)
 
@@ -178,6 +201,10 @@ const goToProduct = () => {
   navigateTo(`/produkt/${props.product.id}`)
 }
 
+const openPreview = () => {
+  emit('preview', props.product)
+}
+
 const openChat = () => {
   if (!user.value || !props.product.seller) return
   
@@ -187,6 +214,30 @@ const openChat = () => {
     avatar: props.product.seller.avatar,
     productId: props.product.id
   })
+}
+
+const shareProduct = async () => {
+  const url = `${window.location.origin}/produkt/${props.product.id}`
+  
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: props.product.title,
+        text: props.product.description.substring(0, 100),
+        url: url
+      })
+    } catch (err) {
+      // User cancelled sharing
+    }
+  } else {
+    // Fallback - copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url)
+      notificationStore.success('Link skopiowany', 'Link do produktu został skopiowany do schowka')
+    } catch (err) {
+      notificationStore.error('Błąd', 'Nie udało się skopiować linku')
+    }
+  }
 }
 
 const getStatusText = (status: string) => {
