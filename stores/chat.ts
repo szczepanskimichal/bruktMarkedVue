@@ -42,10 +42,18 @@ export const useChatStore = defineStore('chat', () => {
   const loadMessages = async (userId: string, productId?: string) => {
     isLoading.value = true
     try {
-      const params = new URLSearchParams({ userId })
+      const params = new URLSearchParams({ otherUserId: userId })
       if (productId) params.append('productId', productId)
       
-      const data = await $fetch<Message[]>(`/api/messages?${params}`)
+      // Get auth token from authStore
+      const { useAuthStore } = await import('~/stores/auth')
+      const authStore = useAuthStore()
+      
+      const data = await $fetch<Message[]>(`/api/messages/list?${params}`, {
+        headers: authStore.token ? {
+          Authorization: `Bearer ${authStore.token}`
+        } : {}
+      })
       messages.value = data
     } catch (error) {
       console.error('Failed to load messages:', error)
@@ -59,8 +67,15 @@ export const useChatStore = defineStore('chat', () => {
     if (!activeChat.value) return
 
     try {
-      const message = await $fetch<Message>('/api/messages', {
+      // Get auth token from authStore
+      const { useAuthStore } = await import('~/stores/auth')
+      const authStore = useAuthStore()
+      
+      const message = await $fetch<Message>('/api/messages/send', {
         method: 'POST',
+        headers: authStore.token ? {
+          Authorization: `Bearer ${authStore.token}`
+        } : {},
         body: {
           content,
           receiverId: activeChat.value.userId,

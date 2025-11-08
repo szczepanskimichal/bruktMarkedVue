@@ -30,7 +30,7 @@
               :key="n"
               class="aspect-square border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
               :class="{ 'border-blue-500 dark:border-blue-400': form.images.length >= n }"
-              @click="uploadImage(n)"
+              @click="triggerImageUpload(n)"
             >
               <div v-if="form.images[n - 1]" class="relative w-full h-full">
                 <img
@@ -54,11 +54,26 @@
               </div>
             </div>
           </div>
+          
+          <!-- Hidden file input -->
+          <input
+            ref="fileInput"
+            type="file"
+            multiple
+            accept="image/*"
+            class="hidden"
+            @change="handleFileSelect"
+          >
+          
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            Dodaj do 6 zdjęć. Pierwsze zdjęcie będzie głównym. Upload funkcjonalność będzie dodana wkrótce.
+            Dodaj do 6 zdjęć. Pierwsze zdjęcie będzie głównym. Obsługujemy pliki JPG, PNG (max 5MB każdy).
           </p>
           <p v-if="errors.images" class="text-sm text-red-600 mt-2">
             {{ errors.images }}
+          </p>
+          <p v-if="uploadingImages" class="text-sm text-blue-600 mt-2 flex items-center">
+            <SimpleIcon name="mdi:loading" class="w-4 h-4 mr-2 animate-spin" />
+            Przesyłanie zdjęć...
           </p>
         </div>
 
@@ -401,6 +416,8 @@ const errors = reactive({
 
 const isLoading = ref(false)
 const errorMessage = ref('')
+const uploadingImages = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // Computed validation
 const isFormValid = computed(() => {
@@ -479,26 +496,58 @@ const validateForm = () => {
   return isValid
 }
 
-// Image handling (placeholder)
-const uploadImage = (index: number) => {
-  // Placeholder for image upload functionality
-  const placeholderUrls = [
-    '/api/placeholder/400/400',
-    '/api/placeholder/400/400',
-    '/api/placeholder/400/400',
-    '/api/placeholder/400/400',
-    '/api/placeholder/400/400',
-    '/api/placeholder/400/400'
-  ]
+// Image handling
+const triggerImageUpload = (index: number) => {
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+const handleFileSelect = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
   
-  if (form.images.length < index) {
-    const url = placeholderUrls[index - 1]
-    if (url) {
-      form.images.push(url)
-    }
+  if (!files || files.length === 0) return
+  
+  // Sprawdź czy nie przekroczymy limitu 6 zdjęć
+  if (form.images.length + files.length > 6) {
+    notificationStore.error('Błąd', 'Możesz dodać maksymalnie 6 zdjęć')
+    return
   }
   
-  notificationStore.info('Info', 'Upload zdjęć zostanie dodany w przyszłej aktualizacji')
+  uploadingImages.value = true
+  errors.images = ''
+  
+  try {
+    const formData = new FormData()
+    for (const file of Array.from(files)) {
+      formData.append('images', file)
+    }
+    
+    const response = await $fetch<{
+      success: boolean
+      images: string[]
+      count: number
+    }>('/api/upload/images', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${authStore.token}`
+      }
+    })
+    
+    if (response.success) {
+      form.images.push(...response.images)
+      notificationStore.success('Sukces', `Dodano ${response.count} zdjęć`)
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error)
+    notificationStore.error('Błąd uploadu', error?.data?.message || 'Nie udało się przesłać zdjęć')
+  } finally {
+    uploadingImages.value = false
+    // Reset input
+    if (target) target.value = ''
+  }
 }
 
 const removeImage = (index: number) => {

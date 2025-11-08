@@ -1,17 +1,8 @@
-import { PrismaClient } from '@prisma/client'
 import { requireAuth } from '../../utils/auth'
 import formidable from 'formidable'
-import { v2 as cloudinary } from 'cloudinary'
 import fs from 'fs'
-
-const prisma = new PrismaClient()
-
-// Konfiguracja Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-})
+import path from 'path'
+import crypto from 'crypto'
 
 export default defineEventHandler(async (event) => {
   if (getMethod(event) !== 'POST') {
@@ -25,41 +16,52 @@ export default defineEventHandler(async (event) => {
     // Sprawdź autentykację
     const user = await requireAuth(event)
 
+    // Ścieżka do folderu uploads
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+    
+    // Upewnij się, że folder istnieje
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true })
+    }
+
     // Parse multipart form data
     const form = formidable({
       maxFiles: 10,
       maxFileSize: 5 * 1024 * 1024, // 5MB
       filter: ({ mimetype }) => {
-        return mimetype && mimetype.includes('image')
+        return Boolean(mimetype && mimetype.includes('image'))
       }
     })
 
     const [fields, files] = await form.parse(event.node.req)
     
-    if (!files.images || files.images.length === 0) {
+    if (!files.images) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Brak zdjęć do uploadu'
       })
     }
 
-    // Upload do Cloudinary
+    // Lokalne przechowywanie obrazów
     const imageUrls: string[] = []
     
-    for (const file of files.images) {
-      if (!file.filepath) continue
+    const fileArray = Array.isArray(files.images) ? files.images : [files.images]
+    
+    for (const file of fileArray) {
+      if (!file.filepath || !file.originalFilename) continue
       
       try {
-        const result = await cloudinary.uploader.upload(file.filepath, {
-          folder: 'bruktmarked/products',
-          public_id: `${user.id}_${Date.now()}`,
-          transformation: [
-            { width: 800, height: 800, crop: 'limit' },
-            { quality: 'auto', fetch_format: 'auto' }
-          ]
-        })
+        // Generuj unikalne ID dla pliku
+        const fileId = crypto.randomUUID()
+        const fileExtension = path.extname(file.originalFilename)
+        const fileName = `${user.id}_${fileId}${fileExtension}`
+        const filePath = path.join(uploadsDir, fileName)
         
-        imageUrls.push(result.secure_url)
+        // Skopiuj plik do public/uploads
+        fs.copyFileSync(file.filepath, filePath)
+        
+        // Dodaj URL do listy (relatywny do public)
+        imageUrls.push(`/uploads/${fileName}`)
         
         // Usuń tymczasowy plik
         fs.unlinkSync(file.filepath)
@@ -85,7 +87,7 @@ export default defineEventHandler(async (event) => {
     console.error('Image upload error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Błąd podczas uploadu'
+      statusMessage: error.statusMessage || 'Błąd podczas uploadu'
     })
   }
 })
