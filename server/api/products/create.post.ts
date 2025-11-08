@@ -10,7 +10,9 @@ const createProductSchema = z.object({
   price: z.number().positive(),
   category: z.string(),
   size: z.string().optional(),
-  condition: z.enum(['nowy', 'bardzo_dobry', 'dobry', 'przeciętny', 'słaby']),
+  condition: z.enum(['nowy', 'bardzo dobry', 'dobry', 'zadowalający']),
+  color: z.string().optional(),
+  brand: z.string().optional(),
   images: z.array(z.string()).optional(),
 })
 
@@ -59,6 +61,8 @@ export default defineEventHandler(async (event) => {
         category: productData.category,
         size: productData.size,
         condition: productData.condition,
+        color: productData.color,
+        brand: productData.brand,
         images: JSON.stringify(productData.images || []),
         sellerId: userId
       },

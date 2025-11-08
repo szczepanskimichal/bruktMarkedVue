@@ -36,6 +36,8 @@ interface CreateProductData {
   category: string
   size?: string
   condition: string
+  color?: string
+  brand?: string
   images?: string[]
 }
 
