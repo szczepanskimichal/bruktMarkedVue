@@ -5,7 +5,7 @@
       <img
         :src="product.images?.[0] || '/api/placeholder/300/400'"
         :alt="product.title"
-        class="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+        class="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
         @click="goToProduct"
       >
       

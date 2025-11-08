@@ -251,14 +251,75 @@ export default defineEventHandler(async (event) => {
           }
         ]
 
+        // Zdjęcia przykładowe dla różnych kategorii
+        const categoryImages = {
+          'sukienki': [
+            'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
+            'https://images.unsplash.com/photo-1566479179817-0f68b7c55295?w=400',
+            'https://images.unsplash.com/photo-1564245013866-e06fb05b5d8a?w=400',
+            'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400'
+          ],
+          'spodnie': [
+            'https://images.unsplash.com/photo-1542272454315-7ad0331de1f6?w=400',
+            'https://images.unsplash.com/photo-1584546406950-90de6e0b21b9?w=400',
+            'https://images.unsplash.com/photo-1541840031508-326b77c9a17e?w=400',
+            'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400'
+          ],
+          'swetry': [
+            'https://images.unsplash.com/photo-1571455786673-1d69567caeea?w=400',
+            'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=400',
+            'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400',
+            'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400'
+          ],
+          'buty': [
+            'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400',
+            'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400',
+            'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400',
+            'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400'
+          ],
+          'kurtki': [
+            'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400',
+            'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
+            'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400',
+            'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400'
+          ],
+          'koszulki': [
+            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
+            'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=400',
+            'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=400',
+            'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400'
+          ],
+          'spodnice': [
+            'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400',
+            'https://images.unsplash.com/photo-1582142306909-195724d87ad4?w=400',
+            'https://images.unsplash.com/photo-1609205103214-ba1618b5fd45?w=400',
+            'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400'
+          ],
+          'akcesoria': [
+            'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+            'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400',
+            'https://images.unsplash.com/photo-1553735237-7be4ad9fb7dd?w=400',
+            'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400'
+          ],
+          'sportowe': [
+            'https://images.unsplash.com/photo-1506629905496-bd4ff5c7000f?w=400',
+            'https://images.unsplash.com/photo-1571019613540-996a0b2d2f9b?w=400',
+            'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400',
+            'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400'
+          ]
+        }
+
         // Dodaj produkty losowo przypisując do użytkowników
         for (const productData of sampleProducts) {
           const randomUser = users[Math.floor(Math.random() * users.length)]
           
+          // Pobierz odpowiednie zdjęcia dla kategorii
+          const categoryImages_for_product = categoryImages[productData.category as keyof typeof categoryImages] || categoryImages['koszulki']
+          
           const product = await prisma.product.create({
             data: {
               ...productData,
-              images: JSON.stringify(['/api/placeholder/300/400', '/api/placeholder/300/400']),
+              images: JSON.stringify(categoryImages_for_product),
               sellerId: randomUser.id,
               views: Math.floor(Math.random() * 100) + 1,
               status: 'active'
