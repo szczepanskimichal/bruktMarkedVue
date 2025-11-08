@@ -15,6 +15,30 @@ export const useFavoritesStore = defineStore('favorites', () => {
     }
   }
 
+  // Load favorites from backend
+  const loadFavoritesFromAPI = async (token?: string) => {
+    if (!token) return
+    
+    isLoading.value = true
+    try {
+      const data = await $fetch('/api/favorites/list', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      const favoriteIds = data.products.map((p: any) => p.id)
+      favorites.value = new Set(favoriteIds)
+      saveFavorites()
+    } catch (error) {
+      console.error('Failed to load favorites from API:', error)
+      // Fall back to localStorage
+      loadFavorites()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // Save favorites to localStorage
   const saveFavorites = () => {
     if (process.client) {
@@ -23,13 +47,16 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   // Add to favorites
-  const addFavorite = async (productId: string) => {
+  const addFavorite = async (productId: string, token?: string) => {
     isLoading.value = true
     try {
       // API call to save favorite
       await $fetch('/api/favorites', {
         method: 'POST',
-        body: { productId }
+        body: { productId },
+        headers: token ? {
+          Authorization: `Bearer ${token}`
+        } : {}
       })
       
       favorites.value.add(productId)
@@ -43,12 +70,15 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   // Remove from favorites
-  const removeFavorite = async (productId: string) => {
+  const removeFavorite = async (productId: string, token?: string) => {
     isLoading.value = true
     try {
       // API call to remove favorite
       await $fetch(`/api/favorites/${productId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: token ? {
+          Authorization: `Bearer ${token}`
+        } : {}
       })
       
       favorites.value.delete(productId)
@@ -79,6 +109,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
     addFavorite,
     removeFavorite,
     isLiked,
-    loadFavorites
+    loadFavorites,
+    loadFavoritesFromAPI
   }
 })

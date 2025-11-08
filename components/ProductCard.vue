@@ -182,9 +182,9 @@ const toggleLike = async () => {
 
   try {
     if (isLiked.value) {
-      await favoritesStore.removeFavorite(props.product.id)
+      await favoritesStore.removeFavorite(props.product.id, authStore.token || undefined)
     } else {
-      await favoritesStore.addFavorite(props.product.id)
+      await favoritesStore.addFavorite(props.product.id, authStore.token || undefined)
     }
   } catch (error) {
     console.error('Failed to toggle like:', error)
