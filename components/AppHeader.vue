@@ -10,51 +10,15 @@
           </span>
         </NuxtLink>
 
-        <!-- Search Bar (Desktop) -->
-        <div class="hidden md:flex flex-1 max-w-lg mx-8">
-          <div class="relative w-full">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Szukaj produktów..."
-              class="form-input pl-10 pr-4"
-              @keyup.enter="handleSearch"
-            >
-            <SimpleIcon 
-              name="mdi:magnify" 
-              class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-            />
-          </div>
-        </div>
+        <!-- ...usunięto wyszukiwanie z headera... -->
 
         <!-- Navigation -->
         <nav class="flex items-center space-x-4">
-          <!-- Categories Dropdown -->
-          <div class="relative" ref="categoriesDropdown">
-            <button
-              @click="showCategories = !showCategories"
-              class="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              <SimpleIcon name="mdi:view-grid" class="w-5 h-5" />
-              <span class="hidden sm:block">Kategorie</span>
-              <SimpleIcon name="mdi:chevron-down" class="w-4 h-4" />
-            </button>
-            
-            <div 
-              v-if="showCategories"
-              class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2"
-            >
-              <NuxtLink
-                v-for="category in categories"
-                :key="category"
-                :to="`/produkty?kategoria=${category}`"
-                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                @click="showCategories = false"
-              >
-                {{ category }}
-              </NuxtLink>
-            </div>
-          </div>
+          <!-- Products Button -->
+          <NuxtLink to="/produkty" class="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+            <SimpleIcon name="mdi:view-grid" class="w-5 h-5" />
+            <span class="hidden sm:block">Wszystkie produkty</span>
+          </NuxtLink>
 
           <!-- Favorites -->
           <NuxtLink 
@@ -183,22 +147,7 @@
         </nav>
       </div>
 
-      <!-- Mobile Search -->
-      <div class="md:hidden pb-4">
-        <div class="relative">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Szukaj produktów..."
-            class="form-input pl-10 pr-4"
-            @keyup.enter="handleSearch"
-          >
-          <SimpleIcon 
-            name="mdi:magnify" 
-            class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-          />
-        </div>
-      </div>
+      <!-- ...usunięto wyszukiwanie z headera mobile... -->
 
       <!-- Mobile Menu -->
       <div 
@@ -234,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { useFavoritesStore } from '~/stores/favorites'
@@ -267,7 +216,6 @@ const categories = [
 // Close dropdowns when clicking outside
 const categoriesDropdown = ref(null)
 const userDropdown = ref(null)
-
 onClickOutside(categoriesDropdown, () => {
   showCategories.value = false
 })
@@ -276,11 +224,16 @@ onClickOutside(userDropdown, () => {
   showUserMenu.value = false
 })
 
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    navigateTo(`/produkty?szukaj=${encodeURIComponent(searchQuery.value)}`)
+
+let searchTimeout: NodeJS.Timeout | undefined
+watch(searchQuery, (val) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  if (val.trim()) {
+    searchTimeout = setTimeout(() => {
+      navigateTo(`/produkty?search=${encodeURIComponent(val)}`)
+    }, 500)
   }
-}
+})
 
 const toggleTheme = () => {
   isDark.value = !isDark.value
@@ -293,15 +246,13 @@ const logout = async () => {
   navigateTo('/')
 }
 
-// Load unread messages count
+// Add missing fetchUnreadMessages function
 const fetchUnreadMessages = async () => {
   if (user.value) {
-    try {
-      const { count } = await $fetch('/api/messages/unread-count')
-      unreadMessages.value = count
-    } catch (error) {
-      console.error('Failed to load unread messages:', error)
-    }
+    // Replace with actual API call to fetch unread messages
+    // Example:
+    // unreadMessages.value = await api.getUnreadMessagesCount(user.value.id)
+    unreadMessages.value = 0 // Placeholder
   } else {
     unreadMessages.value = 0
   }

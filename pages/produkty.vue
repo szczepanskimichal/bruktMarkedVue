@@ -297,10 +297,12 @@ const closePreviewModal = () => {
 }
 
 // Debounced search
-let searchTimeout: NodeJS.Timeout
-watch(searchQuery, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(applyFilters, 500)
+let searchTimeout: NodeJS.Timeout | undefined
+watch(searchQuery, (val) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    applyFilters()
+  }, 500)
 })
 
 // Auto-apply when sort changes

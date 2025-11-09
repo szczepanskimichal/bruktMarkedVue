@@ -49,7 +49,9 @@ export default defineEventHandler(async (event) => {
     if (search) {
       where.OR = [
         { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } }
+        { description: { contains: search as string, mode: 'insensitive' } },
+        { brand: { contains: search as string, mode: 'insensitive' } },
+        { color: { contains: search as string, mode: 'insensitive' } }
       ]
     }
 
@@ -92,10 +94,19 @@ export default defineEventHandler(async (event) => {
       prisma.product.count({ where })
     ])
 
-    // Parse images JSON strings
+
+    // Safe JSON parse for images
+  function safeParseImages(images: string) {
+      try {
+        return JSON.parse(images || '[]')
+      } catch {
+        return []
+      }
+    }
+
     const parsedProducts = products.map(product => ({
       ...product,
-      images: JSON.parse(product.images || '[]')
+      images: safeParseImages(product.images)
     }))
 
     return {
