@@ -294,15 +294,23 @@ const logout = async () => {
 }
 
 // Load unread messages count
-onMounted(async () => {
+const fetchUnreadMessages = async () => {
   if (user.value) {
-    // Load unread messages count from API
     try {
-      const { data } = await $fetch('/api/messages/unread-count')
-      unreadMessages.value = data
+      const { count } = await $fetch('/api/messages/unread-count')
+      unreadMessages.value = count
     } catch (error) {
       console.error('Failed to load unread messages:', error)
     }
+  } else {
+    unreadMessages.value = 0
   }
+}
+
+onMounted(() => {
+  fetchUnreadMessages()
+  const interval = setInterval(fetchUnreadMessages, 30000)
+  // Clear interval on unmount
+  onUnmounted(() => clearInterval(interval))
 })
 </script>

@@ -45,22 +45,7 @@
             >
           </div>
 
-          <!-- Thumbnail Images -->
-          <div v-if="product.images.length > 1" class="grid grid-cols-4 gap-2">
-            <button
-              v-for="(image, index) in product.images"
-              :key="index"
-              @click="selectedImage = image"
-              class="aspect-square bg-white rounded border-2 overflow-hidden"
-              :class="{ 'border-blue-500': selectedImage === image, 'border-gray-200': selectedImage !== image }"
-            >
-              <img
-                :src="image"
-                :alt="`${product.title} - zdjęcie ${index + 1}`"
-                class="w-full h-full object-cover"
-              >
-            </button>
-          </div>
+          <!-- ...usunięto miniaturki zdjęć produktu... -->
         </div>
 
         <!-- Product Info -->
@@ -161,38 +146,11 @@
               <SimpleIcon name="mdi:message" class="w-5 h-5 mr-2" />
               Napisz do sprzedawcy
             </button>
-
-            <div v-else-if="!authStore.isAuthenticated" class="text-center">
-              <p class="text-gray-600 dark:text-gray-400 mb-4">
-                Zaloguj się, aby skontaktować się ze sprzedawcą
-              </p>
-              <NuxtLink to="/logowanie" class="btn-primary">
-                Zaloguj się
-              </NuxtLink>
-            </div>
-
-            <div v-else-if="isOwnProduct" class="text-center">
-              <p class="text-gray-600 dark:text-gray-400 mb-4">
-                To jest Twój produkt
-              </p>
-              <NuxtLink to="/moje-produkty" class="btn-secondary">
-                Zarządzaj produktami
-              </NuxtLink>
-            </div>
           </div>
+          <ChatWidget />
 
           <!-- Product Stats -->
-          <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center space-x-1">
-                <SimpleIcon name="mdi:heart" class="w-4 h-4 text-red-500" />
-                <span>{{ product._count.likes }} polubień</span>
-              </div>
-              <div class="flex items-center space-x-1">
-                <SimpleIcon name="mdi:eye" class="w-4 h-4" />
-                <span>{{ product.views }} wyświetleń</span>
-              </div>
-            </div>
+          <div class="flex items-center justify-end text-sm text-gray-500 dark:text-gray-400 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <div>
               Dodano {{ formatDate(product.createdAt) }}
             </div>
@@ -232,6 +190,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import ChatWidget from '~/components/ChatWidget.vue'
+import { useChatStore } from '~/stores/chat'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { useFavoritesStore } from '~/stores/favorites'
@@ -359,7 +319,13 @@ const toggleLike = async () => {
 
 const startConversation = () => {
   if (!product.value) return
-  navigateTo(`/wiadomosci?user=${product.value.seller.id}&product=${product.value.id}`)
+  const chatStore = useChatStore()
+  chatStore.openChat({
+    userId: product.value.seller.id,
+    username: product.value.seller.username,
+    avatar: product.value.seller.avatar,
+    productId: product.value.id
+  })
 }
 
 const getCategoryName = (category: string) => {
